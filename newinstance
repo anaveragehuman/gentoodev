@@ -1,0 +1,40 @@
+#!/usr/bin/env sh
+set -eu
+
+: "${tag:=amd64}"
+
+cd "$(dirname "$(readlink -e "$0")")"
+
+id=$(podman run \
+    --detach \
+    --interactive \
+    --tty \
+    --pull always \
+    --network host \
+    --cap-add NET_ADMIN \
+    --cap-add SYS_ADMIN \
+    --cap-add SYS_PTRACE \
+    --image-volume tmpfs \
+    --annotation run.oci.keep_original_groups=1 \
+    --mount type=bind,source="make.conf",target=/etc/portage/make.conf \
+    --mount type=bind,source="package.use",target=/etc/portage/package.use/use \
+    --mount type=bind,source="repos.conf",target=/etc/portage/repos.conf \
+    --mount type=bind,source=/var/db/repos/mygentoo,target=/var/db/repos/gentoo \
+    --mount type=bind,source=/var/db/repos/average,target=/var/db/repos/average \
+    --mount type=bind,source=/var/cache/distfiles,target=/var/cache/distfiles \
+    --mount type=bind,source=/var/cache/binpkgs-pure,target=/var/cache/binpkgs \
+    --mount type=tmpfs,destination=/var/log/portage \
+    --mount type=tmpfs,destination=/tmp \
+    gentoo/stage3:$tag)
+
+cleanup() {
+    trap - INT TERM QUIT EXIT
+    set +e
+    podman rm -f "$id"
+}
+trap cleanup INT TERM QUIT EXIT
+
+podman exec "$id" touch /etc/portage/package.use/zz
+podman attach "$id"
+
+#podman system prune

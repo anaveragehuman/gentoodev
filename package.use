@@ -1,0 +1,2 @@
+*/* PYTHON_TARGETS: -python2_7 pypy3
+*/* LUA_TARGETS: luajit
