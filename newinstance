@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-: "${tag:=amd64}"
+: "${tag:=amd64-openrc}"
 
 cd "$(dirname "$(readlink -e "$0")")"
 
